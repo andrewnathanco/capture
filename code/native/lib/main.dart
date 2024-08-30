@@ -24,20 +24,20 @@ class Capture extends StatelessWidget {
       ),
       home: BlocProvider(
         create: (context) => CaptureBloc(),
-        child: const MyHomePage(),
+        child: const Home(),
       ),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key});
+class Home extends StatefulWidget {
+  const Home({super.key});
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<Home> createState() => _HomeState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _HomeState extends State<Home> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -46,55 +46,93 @@ class _MyHomePageState extends State<MyHomePage> {
           builder: (context, state) {
             return Stack(
               children: [
-                state.pressed
-                    ? const Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Spacer(),
-                          // give me a button that is 50x50 and the secondary color
-                          ActionTarget(),
-                          Spacer(),
-                          ActionTarget(),
-                          Spacer(),
-                        ],
-                      )
-                    : Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: <Widget>[
-                          const Spacer(),
-                          const Spacer(),
-                          const Spacer(),
-                          Draggable(
-                            onDraggableCanceled: (velocity, offset) {
-                              context.read<CaptureBloc>().add(ReleaseButton());
-                            },
-                            onDragEnd: (end) {
-                              context.read<CaptureBloc>().add(ReleaseButton());
-                            },
-                            onDragCompleted: () {
-                              context.read<CaptureBloc>().add(ReleaseButton());
-                            },
-                            onDragStarted: () {
-                              context.read<CaptureBloc>().add(PressButton());
-                              // print("button press");
-                            },
-                            feedback: const ClickButton(
-                              pressed: true,
-                            ),
-                            childWhenDragging: Container(),
-                            child: const ClickButton(),
-                          ),
-                          // only show text when button is pressed
-                          state.pressed ? const Text('Pressed') : Container(),
-                          const Spacer(),
-                        ],
-                      ),
+                state.pressed ? const ActionGrid() : Container(),
+                Center(
+                  child: Draggable(
+                    data: "test",
+                    onDraggableCanceled: (velocity, offset) {
+                      context.read<CaptureBloc>().add(ReleaseButton());
+                    },
+                    onDragEnd: (end) {
+                      context.read<CaptureBloc>().add(ReleaseButton());
+                    },
+                    onDragCompleted: () {
+                      context.read<CaptureBloc>().add(ReleaseButton());
+                    },
+                    onDragStarted: () {
+                      context.read<CaptureBloc>().add(PressButton());
+                      // print("button press");
+                    },
+                    feedback: const ClickButton(
+                      pressed: true,
+                    ),
+                    childWhenDragging: Container(),
+                    child: const ClickButton(),
+                  ),
+                ),
               ],
             );
           },
         ),
       ),
+    );
+  }
+}
+
+class ButtonBase extends StatelessWidget {
+  const ButtonBase({
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<CaptureBloc, CaptureState>(
+      builder: (context, state) {
+        return Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            const Spacer(),
+            const Spacer(),
+            const Spacer(),
+            // only show text when button is pressed
+            state.pressed ? const Text('Pressed') : Container(),
+            const Spacer(),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class ActionGrid extends StatelessWidget {
+  const ActionGrid({
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return const Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        Column(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            ActionTarget(),
+            ActionTarget(),
+            ActionTarget(),
+          ],
+        ),
+        Column(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            ActionTarget(),
+            ActionTarget(),
+            ActionTarget(),
+          ],
+        ),
+      ],
     );
   }
 }
@@ -110,16 +148,17 @@ class ActionTarget extends StatefulWidget {
 class _ActionTargetState extends State<ActionTarget> {
   // create a variable to store the size of the button that is passed to the stateful widget
   double _size = 50;
+  Color _color = Colors.deepPurple;
   final double _press = 60;
 
   @override
   Widget build(BuildContext context) {
     return DragTarget(
-      
       onMove: (details) {
         setState(() {
           _size = _press;
-          print("test");
+          _color = Colors.blue;
+          HapticFeedback.lightImpact();
         });
       },
       builder: (context, candidateData, rejectedData) {
@@ -128,7 +167,7 @@ class _ActionTargetState extends State<ActionTarget> {
           width: _size,
           height: _size,
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.secondary,
+            color: _color,
             shape: BoxShape.circle,
           ),
         );
@@ -155,6 +194,12 @@ class _ClickButtonState extends State<ClickButton> {
   void initState() {
     _size = widget.pressed ? 75 : 100;
     super.initState();
+  }
+
+  @override
+  void didChangeDependencies() {
+    // TODO: implement didChangeDependencies
+    super.didChangeDependencies();
   }
 
   @override
